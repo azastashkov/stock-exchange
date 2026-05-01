@@ -1,0 +1,13 @@
+plugins {
+    id 'java-test-fixtures'
+}
+
+dependencies {
+    api project(':modules:exchange-common')
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+
+    testImplementation 'org.slf4j:slf4j-simple:2.0.16'
+
+    // Test fixtures: TestFixClient is exposed for downstream test usage.
+    testFixturesApi project(':modules:exchange-common')
+}

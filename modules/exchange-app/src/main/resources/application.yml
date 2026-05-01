@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: exchange-app
+  main:
+    banner-mode: off
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    distribution:
+      percentiles-histogram:
+        exchange.roundtrip.latency: true
+        exchange.engine.match.latency: true
+        exchange.raft.append.latency: true
+      percentiles:
+        exchange.roundtrip.latency: 0.5,0.95,0.99,0.999
+        exchange.engine.match.latency: 0.5,0.95,0.99,0.999
+        exchange.raft.append.latency: 0.5,0.95,0.99,0.999
+
+exchange:
+  node-id: ${NODE_ID:1}
+  warm-node-id: ${WARM_NODE_ID:2}
+  data-dir: ${DATA_DIR:./data}
+  cluster:
+    peers: ${PEERS:1=localhost:9001,2=localhost:9002,3=localhost:9003,4=localhost:9004,5=localhost:9005}
+  fix:
+    port: ${FIX_PORT:9100}
+    rate-limit-msgs-per-sec: 5000
+    sender-comp-id: ${SENDER_COMP_ID:EXCHANGE}
+  market-data:
+    port: ${MD_PORT:9200}
+  raft:
+    enabled: ${RAFT_ENABLED:false}
+    port: ${RAFT_PORT:9001}
+    heartbeat-interval-ms: 50
+    election-timeout-min-ms: 150
+    election-timeout-max-ms: 300
+  symbols: AAPL,MSFT,GOOG,AMZN,TSLA
+  cpu-pinning:
+    enabled: ${CPU_PINNING:false}

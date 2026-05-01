@@ -1,0 +1,6 @@
+dependencies {
+    api 'it.unimi.dsi:fastutil:8.5.14'
+    api 'org.hdrhistogram:HdrHistogram:2.2.2'
+    implementation 'net.openhft:affinity:3.27ea0'
+    implementation 'org.slf4j:slf4j-api:2.0.16'
+}

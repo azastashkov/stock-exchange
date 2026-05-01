@@ -1,0 +1,21 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  - job_name: 'exchange'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets:
+          - 'exchange-1:8080'
+          - 'exchange-2:8080'
+          - 'exchange-3:8080'
+          - 'exchange-4:8080'
+          - 'exchange-5:8080'
+        labels:
+          service: exchange
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: 'exchange-(\d+):.*'
+        target_label: node
+        replacement: '$1'

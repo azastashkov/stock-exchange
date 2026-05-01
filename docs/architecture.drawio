@@ -1,0 +1,203 @@
+<mxfile host="app.diagrams.net" agent="stock-exchange-plan/0.1.0" type="device">
+  <diagram name="Stock Exchange Architecture" id="se-arch">
+    <mxGraphModel dx="2200" dy="1400" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- Title -->
+        <mxCell id="t-title" value="Stock Exchange — 5-node Raft cluster + Per-node trading flow" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=20;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="20" width="1620" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- ====================== Cluster (left) ====================== -->
+        <mxCell id="g-cluster" value="5-node Raft cluster (HA)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E8F1FF;strokeColor=#5B7FB1;verticalAlign=top;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="40" y="80" width="380" height="540" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="n2" value="Node 2 (HOT, leader)&#10;warm-priority hint = 2&#10;sequencer + matcher writes&#10;canonical event log" style="rounded=1;fillColor=#D5E8D4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="120" y="120" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="n1" value="Node 1 (FOLLOWER)&#10;applies committed entries" style="rounded=1;fillColor=#FFFFFF;strokeColor=#7B8AA1;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="60" y="220" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n3" value="Node 3 (FOLLOWER)&#10;applies committed entries" style="rounded=1;fillColor=#FFFFFF;strokeColor=#7B8AA1;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="240" y="220" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n4" value="Node 4 (FOLLOWER)&#10;applies committed entries" style="rounded=1;fillColor=#FFFFFF;strokeColor=#7B8AA1;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="60" y="310" width="160" height="60" as="geometry"/>
+        </mxCell>
+        <mxCell id="n5" value="Node 5 (FOLLOWER)&#10;applies committed entries" style="rounded=1;fillColor=#FFFFFF;strokeColor=#7B8AA1;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="240" y="310" width="160" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- AppendEntries arrows -->
+        <mxCell id="ae21" style="endArrow=classic;html=1;exitX=0.25;exitY=1;entryX=0.5;entryY=0;strokeColor=#5B7FB1" edge="1" parent="1" source="n2" target="n1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ae23" style="endArrow=classic;html=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;strokeColor=#5B7FB1" edge="1" parent="1" source="n2" target="n3">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ae24" style="endArrow=classic;html=1;exitX=0.25;exitY=1;entryX=0.5;entryY=0;strokeColor=#5B7FB1" edge="1" parent="1" source="n2" target="n4">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="ae25" style="endArrow=classic;html=1;exitX=0.75;exitY=1;entryX=0.5;entryY=0;strokeColor=#5B7FB1" edge="1" parent="1" source="n2" target="n5">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="t-ae" value="AppendEntries (length-prefixed binary RPC over TCP)&#10;heartbeat 50ms, election timeout 150-300ms&#10;warm node uses 100-200ms (preferred leader)" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="400" width="340" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="t-cluster-note" value="Each node owns its own mmap event log.&#10;Slots are appended status=WRITING, then&#10;flipped to COMMITTED once leaderCommit&#10;advances past their index.&#10;Downstream consumers only see COMMITTED." style="text;html=1;strokeColor=none;fillColor=#F8F9FA;align=center;verticalAlign=middle;fontSize=10;fontStyle=2" vertex="1" parent="1">
+          <mxGeometry x="60" y="475" width="340" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- ====================== Per-node detail (center) ====================== -->
+        <mxCell id="g-node" value="Per-node trading flow (single JVM, multiple application loops, mmap rings)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F4F4;strokeColor=#666666;verticalAlign=top;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="450" y="80" width="780" height="850" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cl" value="FIX clients (TCP)" style="rounded=1;fillColor=#F8CECC;strokeColor=#B85450;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="780" y="120" width="180" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gw-in" value="Client Gateway&#10;(gateway-io loop)&#10;FIX 4.4 codec, session, rate limit, validation" style="rounded=1;fillColor=#FFE6CC;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="710" y="190" width="320" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r-in" value="inbound mmap ring" style="rounded=0;fillColor=#FFFFFF;strokeColor=#999999;align=center;verticalAlign=middle;fontStyle=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="780" y="270" width="180" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="om" value="Order Manager (om loop)&#10;ClOrdID dedup, lifecycle" style="rounded=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="710" y="300" width="320" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r-om" value="om-out mmap ring" style="rounded=0;fillColor=#FFFFFF;strokeColor=#999999;align=center;verticalAlign=middle;fontStyle=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="780" y="360" width="180" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="risk" value="Aggregated Risk Check (risk loop)&#10;per-account exposure, fat-finger, rate" style="rounded=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="710" y="390" width="320" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r-risk" value="risk-out mmap ring" style="rounded=0;fillColor=#FFFFFF;strokeColor=#999999;align=center;verticalAlign=middle;fontStyle=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="780" y="450" width="180" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="eng" value="Sequencer + Matching Engine (engine loop)&#10;single writer to canonical event log&#10;price-time priority, limit / market / cancel / replace" style="rounded=1;fillColor=#D5E8D4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="710" y="480" width="320" height="70" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="log" value="canonical mmap event log (256-byte slots, term + sequence + payload, Raft-replicated)" style="rounded=0;fillColor=#FFE6CC;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=11;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="490" y="580" width="700" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="rep" value="Reporter (reporter loop)&#10;builds ExecutionReport from events" style="rounded=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="490" y="650" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mdp" value="Market Data Publisher&#10;(market-data loop) → MD TCP" style="rounded=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="730" y="650" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="pos" value="Position Keeper&#10;(position loop, off hot path)" style="rounded=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="970" y="650" width="220" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="r-out" value="gateway-out mmap ring" style="rounded=0;fillColor=#FFFFFF;strokeColor=#999999;align=center;verticalAlign=middle;fontStyle=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="525" y="720" width="180" height="20" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="gw-out" value="Client Gateway (gateway-out loop)&#10;encodes ExecutionReports → FIX → client" style="rounded=1;fillColor=#FFE6CC;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="490" y="755" width="320" height="55" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="cl2" value="FIX clients (TCP, ExecutionReport)" style="rounded=1;fillColor=#F8CECC;strokeColor=#B85450;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="540" y="830" width="220" height="40" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="md-sub" value="MD subscribers (TCP)" style="rounded=1;fillColor=#F8CECC;strokeColor=#B85450;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="780" y="830" width="220" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- arrows downward -->
+        <mxCell id="e-cl-gw" style="endArrow=classic;html=1" edge="1" parent="1" source="cl" target="gw-in"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-gw-r" style="endArrow=classic;html=1" edge="1" parent="1" source="gw-in" target="r-in"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-r-om" style="endArrow=classic;html=1" edge="1" parent="1" source="r-in" target="om"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-om-r" style="endArrow=classic;html=1" edge="1" parent="1" source="om" target="r-om"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-r-risk" style="endArrow=classic;html=1" edge="1" parent="1" source="r-om" target="risk"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-risk-r" style="endArrow=classic;html=1" edge="1" parent="1" source="risk" target="r-risk"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-r-eng" style="endArrow=classic;html=1" edge="1" parent="1" source="r-risk" target="eng"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-eng-log" style="endArrow=classic;html=1" edge="1" parent="1" source="eng" target="log"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-log-rep" style="endArrow=classic;html=1" edge="1" parent="1" source="log" target="rep"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-log-mdp" style="endArrow=classic;html=1" edge="1" parent="1" source="log" target="mdp"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-log-pos" style="endArrow=classic;html=1" edge="1" parent="1" source="log" target="pos"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-rep-r" style="endArrow=classic;html=1" edge="1" parent="1" source="rep" target="r-out"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-r-gw" style="endArrow=classic;html=1" edge="1" parent="1" source="r-out" target="gw-out"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-gw-cl2" style="endArrow=classic;html=1" edge="1" parent="1" source="gw-out" target="cl2"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-mdp-sub" style="endArrow=classic;html=1" edge="1" parent="1" source="mdp" target="md-sub"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- ====================== Observability (right) ====================== -->
+        <mxCell id="g-obs" value="Observability" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F4F0FF;strokeColor=#7E64C1;verticalAlign=top;fontSize=14;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1260" y="80" width="400" height="540" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="actuator" value="Spring Boot Actuator&#10;/actuator/prometheus on :8080&#10;(every node, exposes Micrometer)" style="rounded=1;fillColor=#FFFFFF;strokeColor=#7E64C1;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1290" y="120" width="340" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="prom" value="Prometheus&#10;scrapes 5 nodes every 5s" style="rounded=1;fillColor=#FCE5CD;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1310" y="220" width="300" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="graf" value="Grafana&#10;auto-provisioned datasource + dashboard&#10;(latency, throughput, ring depth, Raft role,&#10;commit lag, GC pause, top-of-book, ...)" style="rounded=1;fillColor=#D5A6BD;strokeColor=#A05195;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1290" y="320" width="340" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="loadc" value="Java Load Client (FIX 4.4)&#10;HdrHistogram, leader redirect,&#10;rate-limited token bucket" style="rounded=1;fillColor=#F8CECC;strokeColor=#B85450;align=center;verticalAlign=middle;fontSize=11" vertex="1" parent="1">
+          <mxGeometry x="1310" y="460" width="300" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="t-obs-result" value="Headline result: p99 = 3.98 ms&#10;@ 60 s of load against full Raft cluster" style="text;html=1;strokeColor=none;fillColor=#FFFFFF;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="1290" y="555" width="340" height="50" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e-act-prom" style="endArrow=classic;html=1" edge="1" parent="1" source="actuator" target="prom"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-prom-graf" style="endArrow=classic;html=1" edge="1" parent="1" source="prom" target="graf"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e-load-cl" style="endArrow=classic;html=1;dashed=1" edge="1" parent="1" source="loadc" target="cl"><mxGeometry relative="1" as="geometry"/></mxCell>
+
+        <!-- Legend -->
+        <mxCell id="g-legend" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFFFFF;strokeColor=#666666" vertex="1" parent="1">
+          <mxGeometry x="40" y="640" width="380" height="290" as="geometry"/>
+        </mxCell>
+        <mxCell id="t-legend" value="Legend" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=12;fontStyle=1" vertex="1" parent="1">
+          <mxGeometry x="50" y="650" width="360" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg1" value="Engine + log = single-writer hot path" style="rounded=1;fillColor=#D5E8D4;strokeColor=#82B366;align=center;verticalAlign=middle;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="680" width="340" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg2" value="Pre-trade pipeline loop (allocation-free)" style="rounded=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;align=center;verticalAlign=middle;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="715" width="340" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg3" value="Gateway / event log (binary IO with mmap)" style="rounded=1;fillColor=#FFE6CC;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="750" width="340" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg4" value="Client / external endpoint" style="rounded=1;fillColor=#F8CECC;strokeColor=#B85450;align=center;verticalAlign=middle;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="785" width="340" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg5" value="mmap ring buffer (SPSC, 256-byte slots)" style="rounded=0;fillColor=#FFFFFF;strokeColor=#999999;align=center;verticalAlign=middle;fontStyle=2;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="820" width="340" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg6" value="Observability (Prometheus + Grafana)" style="rounded=1;fillColor=#D5A6BD;strokeColor=#A05195;align=center;verticalAlign=middle;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="855" width="340" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="lg7" value="Load client (FIX clients drive load)" style="rounded=1;fillColor=#FCE5CD;strokeColor=#D79B00;align=center;verticalAlign=middle;fontSize=10" vertex="1" parent="1">
+          <mxGeometry x="60" y="890" width="340" height="28" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

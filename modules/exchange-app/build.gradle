@@ -1,0 +1,28 @@
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+dependencies {
+    implementation project(':modules:exchange-common')
+    implementation project(':modules:exchange-engine')
+    implementation project(':modules:exchange-fix')
+    implementation project(':modules:exchange-raft')
+
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'io.micrometer:micrometer-registry-prometheus'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation(testFixtures(project(':modules:exchange-fix')))
+}
+
+bootJar {
+    archiveBaseName = 'exchange-app'
+    archiveClassifier = 'boot'
+}
+
+jar {
+    enabled = false
+}

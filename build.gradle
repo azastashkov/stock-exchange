@@ -1,0 +1,52 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.4' apply false
+    id 'io.spring.dependency-management' version '1.1.6' apply false
+}
+
+allprojects {
+    group = 'com.exchange'
+    version = '0.1.0'
+
+    repositories {
+        mavenCentral()
+    }
+}
+
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'java-library'
+
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs << '-Xlint:all' << '-Xlint:-processing' << '-Xlint:-serial'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events 'failed', 'skipped'
+            showStandardStreams = false
+            exceptionFormat = 'full'
+        }
+        // Allow Foreign Memory & FFM access for mmap-based tests on JDK 21
+        jvmArgs '--enable-native-access=ALL-UNNAMED'
+        jvmArgs '--add-opens=java.base/java.nio=ALL-UNNAMED'
+        jvmArgs '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED'
+        jvmArgs '--add-opens=java.base/java.lang=ALL-UNNAMED'
+    }
+
+    dependencies {
+        testImplementation platform('org.junit:junit-bom:5.11.0')
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.assertj:assertj-core:3.26.3'
+        testImplementation 'org.awaitility:awaitility:4.2.2'
+        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    }
+}

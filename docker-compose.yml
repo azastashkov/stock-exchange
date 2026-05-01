@@ -1,0 +1,177 @@
+name: stock-exchange
+
+x-exchange-common: &exchange-common
+  build:
+    context: .
+    dockerfile: docker/exchange/Dockerfile
+  image: stock-exchange:local
+  environment:
+    PEERS: "1=exchange-1:9001,2=exchange-2:9001,3=exchange-3:9001,4=exchange-4:9001,5=exchange-5:9001"
+    WARM_NODE_ID: "2"
+    DATA_DIR: "/data"
+    CPU_PINNING: "false"
+    RAFT_ENABLED: "true"
+  networks: [exchange-net]
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health || exit 1"]
+    interval: 5s
+    timeout: 2s
+    retries: 30
+    start_period: 20s
+
+services:
+  exchange-1:
+    <<: *exchange-common
+    container_name: exchange-1
+    environment:
+      NODE_ID: "1"
+      PEERS: "1=exchange-1:9001,2=exchange-2:9001,3=exchange-3:9001,4=exchange-4:9001,5=exchange-5:9001"
+      WARM_NODE_ID: "2"
+      DATA_DIR: "/data"
+      CPU_PINNING: "false"
+      RAFT_ENABLED: "true"
+    ports:
+      - "8081:8080"
+      - "9101:9100"
+      - "9201:9200"
+    volumes:
+      - exchange-1-data:/data
+
+  exchange-2:
+    <<: *exchange-common
+    container_name: exchange-2
+    environment:
+      NODE_ID: "2"
+      PEERS: "1=exchange-1:9001,2=exchange-2:9001,3=exchange-3:9001,4=exchange-4:9001,5=exchange-5:9001"
+      WARM_NODE_ID: "2"
+      DATA_DIR: "/data"
+      CPU_PINNING: "false"
+      RAFT_ENABLED: "true"
+    ports:
+      - "8082:8080"
+      - "9102:9100"
+      - "9202:9200"
+    volumes:
+      - exchange-2-data:/data
+
+  exchange-3:
+    <<: *exchange-common
+    container_name: exchange-3
+    environment:
+      NODE_ID: "3"
+      PEERS: "1=exchange-1:9001,2=exchange-2:9001,3=exchange-3:9001,4=exchange-4:9001,5=exchange-5:9001"
+      WARM_NODE_ID: "2"
+      DATA_DIR: "/data"
+      CPU_PINNING: "false"
+      RAFT_ENABLED: "true"
+    ports:
+      - "8083:8080"
+      - "9103:9100"
+      - "9203:9200"
+    volumes:
+      - exchange-3-data:/data
+
+  exchange-4:
+    <<: *exchange-common
+    container_name: exchange-4
+    environment:
+      NODE_ID: "4"
+      PEERS: "1=exchange-1:9001,2=exchange-2:9001,3=exchange-3:9001,4=exchange-4:9001,5=exchange-5:9001"
+      WARM_NODE_ID: "2"
+      DATA_DIR: "/data"
+      CPU_PINNING: "false"
+      RAFT_ENABLED: "true"
+    ports:
+      - "8084:8080"
+      - "9104:9100"
+      - "9204:9200"
+    volumes:
+      - exchange-4-data:/data
+
+  exchange-5:
+    <<: *exchange-common
+    container_name: exchange-5
+    environment:
+      NODE_ID: "5"
+      PEERS: "1=exchange-1:9001,2=exchange-2:9001,3=exchange-3:9001,4=exchange-4:9001,5=exchange-5:9001"
+      WARM_NODE_ID: "2"
+      DATA_DIR: "/data"
+      CPU_PINNING: "false"
+      RAFT_ENABLED: "true"
+    ports:
+      - "8085:8080"
+      - "9105:9100"
+      - "9205:9200"
+    volumes:
+      - exchange-5-data:/data
+
+  prometheus:
+    image: prom/prometheus:v2.55.0
+    container_name: prometheus
+    networks: [exchange-net]
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+    depends_on:
+      - exchange-1
+      - exchange-2
+      - exchange-3
+      - exchange-4
+      - exchange-5
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    container_name: grafana
+    networks: [exchange-net]
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  load-client:
+    build:
+      context: .
+      dockerfile: docker/load-client/Dockerfile
+    image: stock-exchange-load-client:local
+    container_name: load-client
+    networks: [exchange-net]
+    profiles: [test]
+    depends_on:
+      - exchange-1
+      - exchange-2
+      - exchange-3
+      - exchange-4
+      - exchange-5
+    command:
+      - "--targets=exchange-1:9100,exchange-2:9100,exchange-3:9100,exchange-4:9100,exchange-5:9100"
+      - "--rate=10000"
+      - "--duration=120"
+      - "--symbols=AAPL,MSFT,GOOG,AMZN,TSLA"
+      - "--sessions=20"
+
+networks:
+  exchange-net: {}
+
+volumes:
+  exchange-1-data: {}
+  exchange-2-data: {}
+  exchange-3-data: {}
+  exchange-4-data: {}
+  exchange-5-data: {}
+  prometheus-data: {}
+  grafana-data: {}

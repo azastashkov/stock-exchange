@@ -1,0 +1,203 @@
+{
+  "uid": "exchange",
+  "title": "Stock Exchange",
+  "tags": ["exchange"],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "5s",
+  "time": { "from": "now-15m", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "node",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(exchange_engine_match_latency_seconds_count, node)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true,
+        "current": { "text": "All", "value": "$__all" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Round-trip latency p50 / p99 / p99.9",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": { "unit": "s", "min": 0 },
+        "overrides": []
+      },
+      "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p99", "refId": "B" },
+        { "expr": "histogram_quantile(0.999, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p99.9", "refId": "C" }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "heatmap",
+      "title": "Round-trip latency heatmap",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "yAxis": { "unit": "s" }, "calculate": false },
+      "targets": [
+        { "expr": "sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m]))", "format": "heatmap", "legendFormat": "{{le}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Order throughput per node",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [
+        { "expr": "sum by (node) (rate(exchange_engine_new_orders_total[30s]))", "legendFormat": "{{node}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Match throughput (trades/sec)",
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [
+        { "expr": "sum by (node) (rate(exchange_position_trades_total[30s]))", "legendFormat": "{{node}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Engine match latency",
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(exchange_engine_match_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p99", "refId": "A" },
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(exchange_engine_match_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p50", "refId": "B" }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Ring queue depth",
+      "gridPos": { "x": 0, "y": 15, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        { "expr": "exchange_ring_depth{node=~\"$node\"}", "legendFormat": "{{node}}/{{ring}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Raft role per node",
+      "gridPos": { "x": 12, "y": 15, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "mappings": [
+            { "type": "value", "options": {
+              "0": { "text": "FOLLOWER", "color": "blue", "index": 0 },
+              "1": { "text": "CANDIDATE", "color": "yellow", "index": 1 },
+              "2": { "text": "LEADER", "color": "green", "index": 2 }
+            } }
+          ]
+        }
+      },
+      "targets": [
+        { "expr": "exchange_raft_role{node=~\"$node\"}", "legendFormat": "{{node}}", "refId": "A" },
+        { "expr": "exchange_raft_term{node=~\"$node\"}", "legendFormat": "{{node}} term", "refId": "B" }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Raft commit lag (per follower)",
+      "gridPos": { "x": 0, "y": 22, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        { "expr": "exchange_raft_commit_lag", "legendFormat": "{{node}} → {{peer}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 9,
+      "type": "timeseries",
+      "title": "JVM GC pause",
+      "gridPos": { "x": 12, "y": 22, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(jvm_gc_pause_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "{{node}} p99", "refId": "A" },
+        { "expr": "rate(jvm_gc_pause_seconds_count{node=~\"$node\"}[1m])", "legendFormat": "{{node}} count/sec", "refId": "B" }
+      ]
+    },
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Top-of-book per symbol",
+      "gridPos": { "x": 0, "y": 29, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "currencyUSD" } },
+      "targets": [
+        { "expr": "exchange_book_bid", "legendFormat": "{{symbol}} bid", "refId": "A" },
+        { "expr": "exchange_book_ask", "legendFormat": "{{symbol}} ask", "refId": "B" }
+      ]
+    },
+    {
+      "id": 11,
+      "type": "stat",
+      "title": "FIX sessions",
+      "gridPos": { "x": 12, "y": 29, "w": 6, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "sum(exchange_gateway_session_count)", "refId": "A" }
+      ]
+    },
+    {
+      "id": 12,
+      "type": "stat",
+      "title": "Total orders processed",
+      "gridPos": { "x": 18, "y": 29, "w": 6, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] } },
+      "targets": [
+        { "expr": "sum(exchange_engine_new_orders_total)", "refId": "A" }
+      ]
+    },
+    {
+      "id": 13,
+      "type": "timeseries",
+      "title": "Event log sequence",
+      "gridPos": { "x": 0, "y": 36, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        { "expr": "exchange_event_log_sequence{node=~\"$node\"}", "legendFormat": "{{node}}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 14,
+      "type": "timeseries",
+      "title": "Backpressure rejects + risk rejects",
+      "gridPos": { "x": 12, "y": 36, "w": 12, "h": 7 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [
+        { "expr": "rate(exchange_gateway_backpressure_rejected_total[30s])", "legendFormat": "{{node}} backpressure", "refId": "A" },
+        { "expr": "rate(exchange_risk_rejects_total[30s])", "legendFormat": "{{node}} risk", "refId": "B" },
+        { "expr": "rate(exchange_om_duplicate_rejects_total[30s])", "legendFormat": "{{node}} dup", "refId": "C" }
+      ]
+    }
+  ]
+}

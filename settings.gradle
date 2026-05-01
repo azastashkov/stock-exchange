@@ -1,0 +1,8 @@
+rootProject.name = 'stock-exchange'
+
+include 'modules:exchange-common'
+include 'modules:exchange-engine'
+include 'modules:exchange-fix'
+include 'modules:exchange-raft'
+include 'modules:exchange-app'
+include 'modules:load-client'
