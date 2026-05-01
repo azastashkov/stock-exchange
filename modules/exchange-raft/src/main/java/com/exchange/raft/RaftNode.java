@@ -85,9 +85,12 @@ public final class RaftNode extends ApplicationLoop {
     /** Last time the leader sent heartbeats out, in nanos. */
     private long lastHeartbeatSentNanos;
 
-    /** Per-peer Raft state on the leader. */
+    /** Per-peer Raft state on the leader. {@code matchIndex} is a
+     *  {@link ConcurrentHashMap} so the metrics thread can read it
+     *  concurrently with raft-loop updates. */
     private final Map<Integer, Long> nextIndex = new HashMap<>();
-    private final Map<Integer, Long> matchIndex = new HashMap<>();
+    private final java.util.concurrent.ConcurrentHashMap<Integer, Long> matchIndex =
+            new java.util.concurrent.ConcurrentHashMap<>();
     /**
      * Per-peer last-contact timestamp (nanos): updated when this leader
      * receives a successful AppendEntriesResp. Used to detect
@@ -169,6 +172,16 @@ public final class RaftNode extends ApplicationLoop {
 
     public long lastApplied() {
         return persistent.lastApplied();
+    }
+
+    /** Last log index in the local event log (-1 if empty). Public for metrics. */
+    public long lastLogIndexSnapshot() {
+        return lastLogIndex();
+    }
+
+    /** matchIndex for the given peer (-1 if unknown / not leader / not started yet). */
+    public long matchIndexFor(int peerId) {
+        return matchIndex.getOrDefault(peerId, -1L);
     }
 
     public LongSupplier termSupplier() {

@@ -353,6 +353,20 @@ public final class ExchangeWiring implements AutoCloseable {
                             n -> (double) n.commitIndex()).register(meterRegistry);
                     Gauge.builder("exchange.raft.last_applied", raftNode,
                             n -> (double) n.lastApplied()).register(meterRegistry);
+                    // Per-peer commit lag (gauge per follower id, only meaningful on leader).
+                    // lag = lastLogIndex - matchIndex[peer], clamped >= 0; emits 0 on followers.
+                    for (int peerId : raftNode.peers().peerIds()) {
+                        final int pid = peerId;
+                        Gauge.builder("exchange.raft.commit_lag", raftNode, n -> {
+                                    if (n.role() != com.exchange.raft.RaftRole.LEADER) return 0.0;
+                                    long mi = n.matchIndexFor(pid);
+                                    long lli = n.lastLogIndexSnapshot();
+                                    if (mi < 0L) return Math.max(0.0, (double) (lli + 1L));
+                                    return Math.max(0.0, (double) (lli - mi));
+                                })
+                                .tags("peer", Integer.toString(pid))
+                                .register(meterRegistry);
+                    }
                 }
             }
         } catch (IOException e) {
