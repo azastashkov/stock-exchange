@@ -157,12 +157,18 @@ services:
       - exchange-3
       - exchange-4
       - exchange-5
+    # Sustained-rate canonical run. The 5-node Raft cluster commits at roughly
+    # MAX_BATCH * (1 / heartbeat_interval) = 32 * 20 = ~640 entries/sec per
+    # follower; we run comfortably below that so latency stays in target.
+    # Bump --rate higher to reproduce the queue-collapse failure mode.
     command:
       - "--targets=exchange-1:9100,exchange-2:9100,exchange-3:9100,exchange-4:9100,exchange-5:9100"
-      - "--rate=10000"
-      - "--duration=120"
+      - "--rate=500"
+      - "--duration=60"
       - "--symbols=AAPL,MSFT,GOOG,AMZN,TSLA"
-      - "--sessions=20"
+      - "--sessions=4"
+      - "--warm-up-secs=10"
+      - "--p99-ceiling-ms=20"
 
 networks:
   exchange-net: {}

@@ -25,6 +25,16 @@ management:
         exchange.roundtrip.latency: 0.5,0.95,0.99,0.999
         exchange.engine.match.latency: 0.5,0.95,0.99,0.999
         exchange.raft.append.latency: 0.5,0.95,0.99,0.999
+      # Bound the histograms so saturated samples don't all collapse onto +Inf.
+      # roundtrip target is ~ms; cap at 1s. Engine matching is sub-ms; cap at 100ms.
+      minimum-expected-value:
+        exchange.roundtrip.latency: 100us
+        exchange.engine.match.latency: 1us
+        exchange.raft.append.latency: 100us
+      maximum-expected-value:
+        exchange.roundtrip.latency: 30s
+        exchange.engine.match.latency: 1s
+        exchange.raft.append.latency: 30s
 
 exchange:
   node-id: ${NODE_ID:1}

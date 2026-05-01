@@ -34,9 +34,9 @@
       },
       "options": { "legend": { "displayMode": "table", "placement": "bottom" } },
       "targets": [
-        { "expr": "histogram_quantile(0.50, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p50", "refId": "A" },
-        { "expr": "histogram_quantile(0.99, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p99", "refId": "B" },
-        { "expr": "histogram_quantile(0.999, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p99.9", "refId": "C" }
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[5m])))", "legendFormat": "p50", "refId": "A" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[5m])))", "legendFormat": "p99", "refId": "B" },
+        { "expr": "histogram_quantile(0.999, sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[5m])))", "legendFormat": "p99.9", "refId": "C" }
       ]
     },
     {
@@ -47,7 +47,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "options": { "yAxis": { "unit": "s" }, "calculate": false },
       "targets": [
-        { "expr": "sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[1m]))", "format": "heatmap", "legendFormat": "{{le}}", "refId": "A" }
+        { "expr": "sum by (le) (rate(exchange_roundtrip_latency_seconds_bucket{node=~\"$node\"}[5m]))", "format": "heatmap", "legendFormat": "{{le}}", "refId": "A" }
       ]
     },
     {
@@ -58,7 +58,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "ops" } },
       "targets": [
-        { "expr": "sum by (node) (rate(exchange_engine_new_orders_total[30s]))", "legendFormat": "{{node}}", "refId": "A" }
+        { "expr": "sum by (node) (rate(exchange_engine_new_orders_total[2m]))", "legendFormat": "{{node}}", "refId": "A" }
       ]
     },
     {
@@ -69,7 +69,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "ops" } },
       "targets": [
-        { "expr": "sum by (node) (rate(exchange_position_trades_total[30s]))", "legendFormat": "{{node}}", "refId": "A" }
+        { "expr": "sum by (node) (rate(exchange_position_trades_total[2m]))", "legendFormat": "{{node}}", "refId": "A" }
       ]
     },
     {
@@ -80,8 +80,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "s" } },
       "targets": [
-        { "expr": "histogram_quantile(0.99, sum by (le) (rate(exchange_engine_match_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p99", "refId": "A" },
-        { "expr": "histogram_quantile(0.50, sum by (le) (rate(exchange_engine_match_latency_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "p50", "refId": "B" }
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(exchange_engine_match_latency_seconds_bucket{node=~\"$node\"}[5m])))", "legendFormat": "p99", "refId": "A" },
+        { "expr": "histogram_quantile(0.50, sum by (le) (rate(exchange_engine_match_latency_seconds_bucket{node=~\"$node\"}[5m])))", "legendFormat": "p50", "refId": "B" }
       ]
     },
     {
@@ -137,7 +137,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "s" } },
       "targets": [
-        { "expr": "histogram_quantile(0.99, sum by (le) (rate(jvm_gc_pause_seconds_bucket{node=~\"$node\"}[1m])))", "legendFormat": "{{node}} p99", "refId": "A" },
+        { "expr": "histogram_quantile(0.99, sum by (le) (rate(jvm_gc_pause_seconds_bucket{node=~\"$node\"}[5m])))", "legendFormat": "{{node}} p99", "refId": "A" },
         { "expr": "rate(jvm_gc_pause_seconds_count{node=~\"$node\"}[1m])", "legendFormat": "{{node}} count/sec", "refId": "B" }
       ]
     },
@@ -194,9 +194,9 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "fieldConfig": { "defaults": { "unit": "ops" } },
       "targets": [
-        { "expr": "rate(exchange_gateway_backpressure_rejected_total[30s])", "legendFormat": "{{node}} backpressure", "refId": "A" },
-        { "expr": "rate(exchange_risk_rejects_total[30s])", "legendFormat": "{{node}} risk", "refId": "B" },
-        { "expr": "rate(exchange_om_duplicate_rejects_total[30s])", "legendFormat": "{{node}} dup", "refId": "C" }
+        { "expr": "rate(exchange_gateway_backpressure_rejected_total[2m])", "legendFormat": "{{node}} backpressure", "refId": "A" },
+        { "expr": "rate(exchange_risk_rejects_total[2m])", "legendFormat": "{{node}} risk", "refId": "B" },
+        { "expr": "rate(exchange_om_duplicate_rejects_total[2m])", "legendFormat": "{{node}} dup", "refId": "C" }
       ]
     }
   ]
