@@ -109,12 +109,20 @@ public final class SessionRunner implements Runnable, FixClient.Listener {
     /** Called by the central scheduler — non-blocking. Each token = one outbound command. */
     public void offerToken() {
         if (stop.get()) return;
-        // Cap the queue so a stuck session doesn't accumulate tokens forever.
-        if (tokens.size() > 4096) return;
-        // Decide if this token will produce a cancel or new order. Bias 10%
-        // toward cancel _but only_ if we have a cancellable resting order.
+        // Drop the token if the session is offline or mid-redirect: otherwise
+        // tokens pile up while disconnected and burst out on reconnect,
+        // bypassing the rate limit and crushing tail latency.
+        if (!client.isConnected()) return;
+        // Hard cap as a belt-and-suspenders against stuck sessions.
+        if (tokens.size() > 256) return;
         boolean tryCancel = (rng.nextDouble() < CANCEL_RATIO);
         tokens.offer(tryCancel ? CMD_CANCEL : CMD_NEW_ORDER);
+    }
+
+    /** Discard any tokens that were queued while the session was offline.
+     *  Called from the redirect path so reconnects don't flush a backlog. */
+    private void drainPendingTokens() {
+        tokens.clear();
     }
 
     @Override
@@ -341,6 +349,10 @@ public final class SessionRunner implements Runnable, FixClient.Listener {
                 client.senderCompId(), currentTarget, next);
         currentTarget = next;
         client.disconnect();
+        // Discard tokens that were queued before the redirect — they belonged
+        // to the old (wrong) target and we don't want them to burst out as
+        // soon as we reconnect.
+        drainPendingTokens();
         // SessionRunner main loop will reconnect on next iteration.
     }
 }
